@@ -32,7 +32,6 @@
           </a>
           <span>{{ .Schedule }}</span>
           <span>
-            <span>{{ .LastScheduleTime }}</span>
             <span>
               {{ if gt (len .ActiveJobNames) 0 }}
                 🏃‍♀️
@@ -40,6 +39,13 @@
                 ✅
               {{ else }}
                 🚫
+              {{ end }}
+            </span>
+            <span>
+              {{ if eq .LastScheduleTime "" }}
+                not scheduled yet
+              {{ else }}
+                {{ .LastScheduleTime }}
               {{ end }}
             </span>
           </span>
