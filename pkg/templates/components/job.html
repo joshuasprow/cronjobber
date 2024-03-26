@@ -1,0 +1,27 @@
+{{ define "components/job" }}
+  <tr id="{{ .Name }}" class="{{ .State }}" title="{{ .Name }}">
+    <td class="name">{{ .Name }}</td>
+    <td class="started">{{ .StartTime }}</td>
+    <td class="completed">{{ .CompletionTime }}</td>
+    <td class="success">{{ .Succeeded }}</td>
+    <td class="info">
+      <button
+        class="job-info-button"
+        data-name="{{ .Name }}"
+        {{/* prettier-ignore-start .Def is JSON and needs to be wrapped in single quotes */}}
+        data-def='{{ .Def }}'
+        {{/* prettier-ignore-end */}}
+      >
+        🔍
+      </button>
+    </td>
+    <td class="delete">
+      <form hx-delete="job" hx-target="#{{ .Name }}" hx-swap="outerHTML">
+        {{ template "jobinputs" . }}
+        <button hx-disabled-elt="this" class="delete" type="submit">
+          delete
+        </button>
+      </form>
+    </td>
+  </tr>
+{{ end }}

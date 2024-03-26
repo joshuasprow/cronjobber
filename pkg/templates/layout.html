@@ -1,0 +1,117 @@
+{{ define "layout" }}
+  <!doctype html>
+  <html lang="en">
+    <head>
+      {{ block "meta" . }}
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      {{ end }}
+      <title>{{ block "title" . }}cronjobber{{ end }}</title>
+      {{ block "css" . }}
+        <style>
+          html {
+            font-family: monospace;
+          }
+
+          button,
+          input,
+          select,
+          textarea {
+            font: inherit;
+          }
+
+          dialog {
+            background-color: white;
+            border: 1px solid black;
+            padding: 0;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+            max-height: 90dvh;
+            z-index: 100;
+
+            header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              position: sticky;
+              padding: 0.5em;
+              top: 0;
+              right: 0;
+              height: 2em;
+              background-color: white;
+              border-bottom: 1px solid black;
+              cursor: pointer;
+            }
+
+            main {
+              overflow: auto;
+              max-height: calc(90dvh - 5em);
+              padding: 0.5em;
+            }
+
+            pre {
+              margin: 0;
+            }
+          }
+
+          .cron-job-controls {
+            display: flex;
+            gap: 1em;
+            align-items: center;
+          }
+
+          table {
+            border-collapse: collapse;
+          }
+
+          .jobs-table {
+            th,
+            td {
+              padding: 0.5em;
+              height: 2em;
+              text-align: left;
+            }
+
+            th.name {
+              width: 29ch;
+            }
+
+            td.name {
+              max-width: 29ch;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            th.started,
+            th.completed {
+              width: 22ch;
+            }
+
+            th.success,
+            th.info,
+            th.delete {
+              width: 5ch;
+            }
+
+            tr.adding {
+              background-color: #ccffcc;
+            }
+
+            tr.deleting {
+              background-color: #ffcccc;
+            }
+          }
+        </style>
+      {{ end }}
+      {{ block "js" . }}
+        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+        <script src="https://unpkg.com/htmx.org/dist/ext/debug.js"></script>
+      {{ end }}
+    </head>
+    <body>
+      <main>
+        <h1>You shouldn't be seeing this...</h1>
+      </main>
+    </body>
+  </html>
+{{ end }}

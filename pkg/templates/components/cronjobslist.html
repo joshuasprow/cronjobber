@@ -1,0 +1,50 @@
+{{ block "components/cronjobslist" . }}
+  <style>
+    .cron-jobs-list {
+      list-style-type: none;
+      padding: 0;
+
+      li {
+        display: grid;
+        grid-template-columns: 32ch 16ch auto;
+        padding: 0.25em;
+
+        a {
+          max-width: 32ch;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  </style>
+
+  <ul class="cron-jobs-list">
+    {{ if .Error }}
+      <p>{{ .Error }}</p>
+    {{ else if not .Loaded }}
+      <p>loading...</p>
+    {{ else }}
+      {{ range .CronJobs }}
+        <li>
+          <a href="/cronjob?namespace={{ .Namespace }}&cronJobName={{ .Name }}">
+            {{ .Name }}
+          </a>
+          <span>{{ .Schedule }}</span>
+          <span>
+            <span>{{ .LastScheduleTime }}</span>
+            <span>
+              {{ if gt (len .ActiveJobNames) 0 }}
+                🏃‍♀️
+              {{ else if gt .LastSuccessfulTime .LastScheduleTime }}
+                ✅
+              {{ else }}
+                🚫
+              {{ end }}
+            </span>
+          </span>
+        </li>
+      {{ end }}
+    {{ end }}
+  </ul>
+{{ end }}

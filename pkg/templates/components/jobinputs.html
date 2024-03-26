@@ -1,0 +1,9 @@
+{{ define "jobinputs" }}
+  <input type="hidden" name="namespace" value="{{ .Namespace }}" />
+  <input type="hidden" name="ownerName" value="{{ .OwnerName }}" />
+  <input type="hidden" name="jobName" value="{{ .Name }}" />
+  <input type="hidden" name="startTime" value="{{ .StartTime }}" />
+  <input type="hidden" name="completionTime" value="{{ .CompletionTime }}" />
+  <input type="hidden" name="succeeded" value="{{ .Succeeded }}" />
+  <input type="hidden" name="state" value="{{ .State }}" />
+{{ end }}

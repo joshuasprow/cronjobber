@@ -1,0 +1,5 @@
+{{ define "components/jobs" }}
+  {{ range .Jobs }}
+    {{ template "components/job" . }}
+  {{ end }}
+{{ end }}

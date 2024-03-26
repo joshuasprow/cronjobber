@@ -1,0 +1,18 @@
+{{ define "components/cronjobinputs" }}
+  <div id="cron-job-inputs">
+    <input type="hidden" name="namespace" value="{{ .Namespace }}" />
+    <input type="hidden" name="cronJobUid" value="{{ .Uid }}" />
+    <input type="hidden" name="cronJobName" value="{{ .Name }}" />
+    <input type="hidden" name="schedule" value="{{ .Schedule }}" />
+    <input
+      type="hidden"
+      name="lastScheduleTime"
+      value="{{ .LastScheduleTime }}"
+    />
+    <input
+      type="hidden"
+      name="lastSuccessfulTime"
+      value="{{ .LastSuccessfulTime }}"
+    />
+  </div>
+{{ end }}

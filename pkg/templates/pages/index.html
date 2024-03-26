@@ -1,0 +1,17 @@
+{{ template "layout" }}
+{{ define "pages/index" }}
+  <!doctype html>
+  <html>
+    <head>
+      {{ block "meta" . }}{{ end }}
+      <title>{{ block "title" . }}k8s-webhooks{{ end }}</title>
+      {{ block "css" . }}{{ end }}
+      {{ block "js" . }}{{ end }}
+    </head>
+    <body>
+      <main hx-get="/" hx-trigger="load">
+        {{ template "components/index" . }}
+      </main>
+    </body>
+  </html>
+{{ end }}

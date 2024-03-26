@@ -1,0 +1,135 @@
+{{ template "layout" }}
+{{ define "pages/cronjob" }}
+  <!doctype html>
+  <html>
+    <head>
+      {{ block "meta" . }}{{ end }}
+      <title>
+        {{ block "title" . }}k8s-webhooks - {{ .Name }}{{ end }}
+      </title>
+      {{ block "css" . }}{{ end }}
+      {{ block "js" . }}{{ end }}
+    </head>
+    <body>
+      <main hx-get="/cronjob" hx-include="#cron-job-inputs" hx-trigger="load">
+        {{ template "components/cronjob" . }}
+      </main>
+
+      <dialog id="cron-job-info-dialog">
+        <header>
+          <span></span>
+          <form method="dialog">
+            <button>close</button>
+          </form>
+        </header>
+        <main>
+          <pre></pre>
+        </main>
+      </dialog>
+
+      <dialog id="job-info-dialog">
+        <header>
+          <span></span>
+          <form method="dialog">
+            <button>close</button>
+          </form>
+        </header>
+        <main>
+          <pre></pre>
+        </main>
+      </dialog>
+
+      <script>
+        // @ts-check
+        document.addEventListener(
+          "htmx:load",
+          (/** @type { Event & { detail?: { elt?: Element } } } */ event) => {
+            const elt = event?.detail?.elt;
+
+            if (!elt) {
+              console.warn("htmx:load", "no element found");
+              return;
+            }
+
+            for (const infoButton of elt.querySelectorAll(
+              ".cron-job-info-button",
+            )) {
+              infoButton.addEventListener("click", onJobInfoButtonClick);
+            }
+
+            for (const infoButton of elt.querySelectorAll(".job-info-button")) {
+              infoButton.addEventListener("click", onJobInfoButtonClick);
+            }
+          },
+        );
+
+        /** @param {Event} event */
+        function onJobInfoButtonClick(event) {
+          try {
+            onInfoButtonClick("cron-job-info-dialog", event);
+          } catch (error) {
+            console.error("onJobInfoButtonClick", error);
+          }
+        }
+        /** @param {Event} event */
+        function onJobInfoButtonClick(event) {
+          try {
+            onInfoButtonClick("job-info-dialog", event);
+          } catch (error) {
+            console.error("onJobInfoButtonClick", error);
+          }
+        }
+
+        /**
+         * @param {string} dialogId
+         * @param {Event} event
+         */
+        function onInfoButtonClick(dialogId, event) {
+          const target = event.target;
+
+          if (!target) {
+            throw new Error("no target found");
+          }
+
+          if (!(target instanceof HTMLElement)) {
+            throw new Error("target is not an HTMLElement");
+          }
+
+          const dialog = document.getElementById(dialogId);
+
+          if (!dialog) {
+            throw new Error(`missing dialog with id "${dialogId}"`);
+          }
+
+          if (!(dialog instanceof HTMLDialogElement)) {
+            throw new Error(`element with id "${dialogId}" is not a dialog`);
+          }
+
+          const title = dialog.querySelector("header>span");
+          const pre = dialog.querySelector("main>pre");
+
+          if (!title || !pre) {
+            throw new Error("missing dialog elements");
+          }
+
+          if (dialog.open) {
+            dialog.close();
+            return;
+          }
+
+          title.textContent = target.dataset.name || "";
+
+          try {
+            const def = JSON.parse(target.dataset.def || "");
+
+            pre.textContent = JSON.stringify(def, null, 2);
+          } catch (error) {
+            pre.textContent = "Failed to parse job definition";
+          }
+
+          dialog.showModal();
+        }
+      </script>
+    </body>
+  </html>
+{{ end }}

@@ -1,0 +1,10 @@
+{
+  "name": "cronjobber",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "prettier-plugin-go-template": "^0.0.15"
+  },
+  "type": "module"
+}

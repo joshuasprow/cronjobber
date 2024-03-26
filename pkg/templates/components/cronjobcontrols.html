@@ -1,0 +1,36 @@
+{{ define "components/cronjobcontrols" }}
+  <header class="cron-job-controls">
+    <form
+      hx-post="/job"
+      hx-include="#cron-job-inputs"
+      hx-swap="afterbegin"
+      hx-target="#jobs"
+    >
+      <a href="/">👈</a>
+      {{ if .Loaded }}
+        <span>{{ .Name }}</span>
+      {{ else }}
+        <span>loading...</span>
+      {{ end }}
+      <button
+        class="cron-job-info-button"
+        {{ if not .Loaded }}disabled{{ end }}
+        data-name="{{ .Name }}"
+        {{/* prettier-ignore-start .Def is JSON and needs to be wrapped in single quotes */}}
+        data-def='{{ .Def }}'
+        {{/* prettier-ignore-end */}}
+        type="button"
+      >
+        🔍
+      </button>
+      <button
+        hx-disabled-elt="this"
+        {{ if not .Loaded }}disabled{{ end }}
+        type="submit"
+      >
+        go!
+      </button>
+      <span>{{ .Schedule }}</span>
+    </form>
+  </header>
+{{ end }}

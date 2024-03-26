@@ -1,0 +1,26 @@
+{{ define "components/cronjob" }}
+  {{ template "components/cronjobinputs" . }}
+  {{ template "components/cronjobcontrols" . }}
+  <table class="jobs-table">
+    <thead>
+      <tr>
+        <th class="name">name</th>
+        <th class="started">started</th>
+        <th class="completed">completed</th>
+        <th class="success">success</th>
+        <th class="info">info</th>
+        <th class="delete">delete</th>
+      </tr>
+    </thead>
+    {{ if .Loaded }}
+      <tbody
+        id="jobs"
+        hx-get="/jobs"
+        hx-include="#cron-job-inputs"
+        hx-trigger="load,every 3s"
+      >
+        {{ template "components/jobs" . }}
+      </tbody>
+    {{ end }}
+  </table>
+{{ end }}
