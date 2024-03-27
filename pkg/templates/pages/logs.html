@@ -1,0 +1,28 @@
+{{ template "layout" }}
+{{ define "pages/logs" }}
+  <!doctype html>
+  <html>
+    <head>
+      {{ block "meta" . }}{{ end }}
+      <title>
+        {{ block "title" . }}cronjobber - logs{{ end }}
+      </title>
+      {{ block "css" . }}{{ end }}
+      {{ block "js" . }}{{ end }}
+    </head>
+    <body>
+      <main>
+        <input type="hidden" name="namespace" value="{{ .Namespace }}" />
+        <input type="hidden" name="pod" value="{{ .Pod }}" />
+        <input type="hidden" name="name" value="{{ .Name }}" />
+        <table>
+          <thead>
+            <tr></tr>
+          </thead>
+
+          <tbody></tbody>
+        </table>
+      </main>
+    </body>
+  </html>
+{{ end }}

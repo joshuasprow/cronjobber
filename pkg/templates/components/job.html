@@ -15,7 +15,15 @@
       </button>
     </td>
     <td class="container">
-      {{ .Container.Name }}
+      {{ if eq .Container.Name "" }}
+        <span>n/a</span>
+      {{ else }}
+        <a
+          href="/logs?namespace={{ .Container.Namespace }}&pod={{ .Container.Pod }}&name={{ .Container.Name }}"
+        >
+          {{ .Container.Name }}
+        </a>
+      {{ end }}
     </td>
     <td class="delete">
       <form hx-delete="job" hx-target="#{{ .Name }}" hx-swap="outerHTML">
