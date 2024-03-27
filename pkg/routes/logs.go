@@ -136,6 +136,7 @@ func (l Logs) handleGetStream(w http.ResponseWriter, r *http.Request) error {
 			if _, err := w.Write([]byte("\n\n")); err != nil {
 				return fmt.Errorf("write newline: %w", err)
 			}
+
 			flusher.Flush()
 		}
 	}
