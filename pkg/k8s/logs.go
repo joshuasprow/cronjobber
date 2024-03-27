@@ -12,7 +12,30 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func StreamPodLogs(
+func GetLogs(
+	ctx context.Context,
+	clientset *kubernetes.Clientset,
+	container models.Container,
+) (
+	[]string,
+	error,
+) {
+	req, err := clientset.
+		CoreV1().
+		Pods(container.Namespace).
+		GetLogs(
+			container.Pod,
+			&v1.PodLogOptions{Container: container.Name},
+		).
+		DoRaw(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get logs: %w", err)
+	}
+
+	return strings.Split(strings.TrimSpace(string(req)), "\n"), nil
+}
+
+func StreamLogs(
 	ctx context.Context,
 	clientset *kubernetes.Clientset,
 	container models.Container,
@@ -28,7 +51,7 @@ func StreamPodLogs(
 			&v1.PodLogOptions{
 				Container: container.Name,
 				Follow:    true,
-				TailLines: pkg.Pointer(int64(10)),
+				TailLines: pkg.Pointer(int64(1)),
 			},
 		)
 

@@ -11,8 +11,9 @@ import (
 type Logs struct {
 	models.Container
 
-	Loaded bool
-	Error  string
+	Messages []string
+	Loaded   bool
+	Error    string
 }
 
 func parseFormLogs(request models.Request) models.Container {

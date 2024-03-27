@@ -9,7 +9,6 @@ import (
 
 type logMiddlewareWriter struct {
 	http.ResponseWriter
-	http.Flusher
 	bodyBuf    *bytes.Buffer
 	statusCode int
 }
@@ -17,10 +16,18 @@ type logMiddlewareWriter struct {
 func newLogMiddlewareWriter(w http.ResponseWriter) *logMiddlewareWriter {
 	return &logMiddlewareWriter{
 		ResponseWriter: w,
-		Flusher:        w.(http.Flusher),
 		bodyBuf:        &bytes.Buffer{},
 		statusCode:     http.StatusOK,
 	}
+}
+
+// Flush implements the http.Flusher interface. Used when implementing Server-Sent Events.
+func (w *logMiddlewareWriter) Flush() {
+	flusher, ok := w.ResponseWriter.(http.Flusher)
+	if !ok {
+		return
+	}
+	flusher.Flush()
 }
 
 func (w *logMiddlewareWriter) WriteHeader(statusCode int) {
@@ -42,7 +49,7 @@ func truncateString(str string, length int) string {
 }
 
 func logMiddleware(log *slog.Logger, handler http.Handler) http.HandlerFunc {
-	const bodyLength = 80
+	const bodyLength = 240
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		args := []any{

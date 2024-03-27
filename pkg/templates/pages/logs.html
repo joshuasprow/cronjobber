@@ -8,13 +8,30 @@
         {{ block "title" . }}cronjobber - logs{{ end }}
       </title>
       {{ block "css" . }}{{ end }}
+      <style>
+        #logs {
+          pre {
+            max-width: 90vw;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+      </style>
       {{ block "js" . }}{{ end }}
       <script src="https://unpkg.com/htmx.org@1.9.11/dist/ext/sse.js"></script>
     </head>
     <body>
       <main>
         {{ template "components/containerinputs" . }}
-        <table>
+        <table
+          id="logs-table"
+          hx-ext="sse"
+          hx-target="#logs"
+          hx-swap="beforeend"
+          sse-connect="/logs?namespace={{ .Namespace }}&pod={{ .Pod }}&name={{ .Name }}"
+          sse-swap="message"
+        >
           <thead>
             <tr>
               <th>message</th>
@@ -22,11 +39,13 @@
           </thead>
 
           <tbody
-            hx-ext="sse"
-            hx-swap="afterbegin"
-            sse-connect="/logs?namespace={{ .Namespace }}&pod={{ .Pod }}&name={{ .Name }}"
-            sse-swap="message"
-          ></tbody>
+            id="logs"
+            hx-get="/logs"
+            hx-include="#container-inputs"
+            hx-trigger="load"
+          >
+            {{ template "components/logs" . }}
+          </tbody>
         </table>
       </main>
     </body>

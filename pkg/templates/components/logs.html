@@ -1,0 +1,7 @@
+{{ define "components/logs" }}
+  {{ range .Messages }}
+    <tr>
+      <td><pre>{{ . }}</pre></td>
+    </tr>
+  {{ end }}
+{{ end }}
