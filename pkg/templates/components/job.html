@@ -14,6 +14,9 @@
         🔍
       </button>
     </td>
+    <td class="container">
+      {{ .Container.Name }}
+    </td>
     <td class="delete">
       <form hx-delete="job" hx-target="#{{ .Name }}" hx-swap="outerHTML">
         {{ template "jobinputs" . }}

@@ -112,6 +112,11 @@ func GetJobs(
 		jobs = append(jobs, model)
 	}
 
+	jobs, err = SetJobsContainers(ctx, clientset, namespace, jobs)
+	if err != nil {
+		return nil, fmt.Errorf("set jobs containers: %w", err)
+	}
+
 	sort.SliceStable(jobs, func(i, j int) bool {
 		return jobs[i].Name > jobs[j].Name
 	})

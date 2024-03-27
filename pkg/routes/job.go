@@ -37,7 +37,7 @@ func (j Job) GET(w http.ResponseWriter, r *http.Request) {
 		job.Error = "bad request"
 	}
 
-	if err := j.tmpl.Render(w, "components/job", j); err != nil {
+	if err := j.tmpl.Render(w, "components/job", job); err != nil {
 		j.log.Error("execute template", "err", err)
 		return
 	}

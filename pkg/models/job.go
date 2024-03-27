@@ -1,6 +1,8 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Job struct {
 	Namespace      string
@@ -10,6 +12,7 @@ type Job struct {
 	StartTime      string
 	CompletionTime string
 	Succeeded      bool
+	Container      Container
 	State          string
 	Def            string
 }

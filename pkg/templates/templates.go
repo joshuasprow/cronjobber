@@ -21,6 +21,21 @@ func New() (*Templates, error) {
 	tmpl, err := template.
 		New("").
 		Funcs(template.FuncMap{
+			"add": func(a, b int) int { return a + b },
+			"sub": func(a, b int) int { return a - b },
+			"interval": func(n int) []int {
+				if n <= 0 {
+					return []int{}
+				}
+
+				interval := make([]int, n)
+
+				for i := range interval {
+					interval[i] = i
+				}
+
+				return interval
+			},
 			"prettyjson": func(s string) string {
 				buf := &bytes.Buffer{}
 
