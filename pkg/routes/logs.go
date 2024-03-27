@@ -126,11 +126,15 @@ func (l Logs) handleGetStream(w http.ResponseWriter, r *http.Request) error {
 			if log.V == "" {
 				break
 			}
-			if _, err := w.Write([]byte("event: message\n")); err != nil {
+
+			if _, err := w.Write([]byte("event: message\ndata: ")); err != nil {
 				return fmt.Errorf("write event: %w", err)
 			}
-			if _, err := w.Write([]byte("data: <tr><td><pre>" + log.V + "</pre></td></tr>\n\n")); err != nil {
-				return fmt.Errorf("write data: %w", err)
+			if err := l.tmpl.Render(w, "components/log", log.V); err != nil {
+				return fmt.Errorf("execute template: %w", err)
+			}
+			if _, err := w.Write([]byte("\n\n")); err != nil {
+				return fmt.Errorf("write newline: %w", err)
 			}
 			flusher.Flush()
 		}

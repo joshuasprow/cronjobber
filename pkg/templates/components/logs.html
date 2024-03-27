@@ -1,7 +1,5 @@
 {{ define "components/logs" }}
   {{ range .Messages }}
-    <tr>
-      <td><pre>{{ . }}</pre></td>
-    </tr>
+    {{ template "components/log" . }}
   {{ end }}
 {{ end }}

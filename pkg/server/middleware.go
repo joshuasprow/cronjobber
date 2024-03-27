@@ -49,12 +49,14 @@ func truncateString(str string, length int) string {
 }
 
 func logMiddleware(log *slog.Logger, handler http.Handler) http.HandlerFunc {
-	const bodyLength = 240
+	const urlLength = 30
+	const formLength = 30
+	const bodyLength = 30
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		args := []any{
 			"method", r.Method,
-			"url", truncateString(r.URL.String(), bodyLength),
+			"url", truncateString(r.URL.String(), urlLength),
 		}
 
 		if r.Method == "POST" {
@@ -64,7 +66,7 @@ func logMiddleware(log *slog.Logger, handler http.Handler) http.HandlerFunc {
 				return
 			}
 
-			args = append(args, "form", truncateString(r.Form.Encode(), bodyLength))
+			args = append(args, "form", truncateString(r.Form.Encode(), formLength))
 		}
 
 		log.Info("request", args...)
