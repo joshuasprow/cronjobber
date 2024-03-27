@@ -1,7 +1,9 @@
 package templates
 
 import (
+	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -19,6 +21,15 @@ func New() (*Templates, error) {
 	tmpl, err := template.
 		New("").
 		Funcs(template.FuncMap{
+			"prettyjson": func(s string) string {
+				buf := &bytes.Buffer{}
+
+				if err := json.Indent(buf, []byte(s), "", "  "); err != nil {
+					return s
+				}
+
+				return buf.String()
+			},
 			"slicecontains": func(ss []string, s string) bool { return slices.Contains(ss, s) },
 		}).
 		ParseFS(fs, "**.html", "**/**.html")
