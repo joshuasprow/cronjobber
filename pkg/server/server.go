@@ -28,21 +28,20 @@ func New(
 	mux.HandleFunc("GET /", index.GET)
 
 	cronjob := routes.NewCronJob(log, clientset, tmpl)
-
 	mux.HandleFunc("GET /cronjob", cronjob.GET)
 
-	job := routes.NewJob(log, clientset, tmpl)
+	cronjobdef := routes.NewCronJobDef(log, clientset, tmpl)
+	mux.HandleFunc("GET /cronjobdef", cronjobdef.GET)
 
+	jobs := routes.NewJobs(log, clientset, tmpl)
+	mux.HandleFunc("GET /jobs", jobs.GET)
+
+	job := routes.NewJob(log, clientset, tmpl)
 	mux.HandleFunc("GET /job", job.GET)
 	mux.HandleFunc("POST /job", job.POST)
 	mux.HandleFunc("DELETE /job", job.DELETE)
 
-	jobs := routes.NewJobs(log, clientset, tmpl)
-
-	mux.HandleFunc("GET /jobs", jobs.GET)
-
 	jobdef := routes.NewJobDef(log, clientset, tmpl)
-
 	mux.HandleFunc("GET /jobdef", jobdef.GET)
 
 	return &Server{

@@ -13,12 +13,10 @@
         <span>loading...</span>
       {{ end }}
       <button
-        class="cron-job-info-button"
-        {{ if not .Loaded }}disabled{{ end }}
-        data-name="{{ .Name }}"
-        {{/* prettier-ignore-start .Def is JSON and needs to be wrapped in single quotes */}}
-        data-def='{{ .Def }}'
-        {{/* prettier-ignore-end */}}
+        hx-get="/cronjobdef"
+        hx-include="#cron-job-inputs"
+        hx-target="body"
+        hx-swap="beforeend"
         type="button"
       >
         🔍
