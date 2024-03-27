@@ -6,11 +6,10 @@
     <td class="success">{{ .Succeeded }}</td>
     <td class="info">
       <button
-        class="job-info-button"
-        data-name="{{ .Name }}"
-        {{/* prettier-ignore-start .Def is JSON and needs to be wrapped in single quotes */}}
-        data-def='{{ .Def }}'
-        {{/* prettier-ignore-end */}}
+        hx-get="/jobdef"
+        hx-include="#{{ .Name }}"
+        hx-target="body"
+        hx-swap="beforeend"
       >
         🔍
       </button>

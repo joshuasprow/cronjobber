@@ -1,0 +1,11 @@
+{{ define "components/jobdef" }}
+  <dialog id="job-def" class="info-dialog">
+    <header>
+      <span>{{ .Name }}</span>
+      <button class="close-button">close</button>
+    </header>
+    <main>
+      <pre>{{ .Def }}</pre>
+    </main>
+  </dialog>
+{{ end }}

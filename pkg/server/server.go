@@ -41,6 +41,10 @@ func New(
 
 	mux.HandleFunc("GET /jobs", jobs.GET)
 
+	jobdef := routes.NewJobDef(log, clientset, tmpl)
+
+	mux.HandleFunc("GET /jobdef", jobdef.GET)
+
 	return &Server{
 		s: &http.Server{
 			Addr:    ":8080",
