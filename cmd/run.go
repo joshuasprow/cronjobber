@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/joshuasprow/cronjobber/pkg"
 	"github.com/joshuasprow/cronjobber/pkg/k8s"
+	"github.com/joshuasprow/cronjobber/pkg/server"
 	"github.com/joshuasprow/cronjobber/pkg/templates"
 )
 
@@ -27,7 +27,7 @@ func Run(log *slog.Logger) error {
 		return fmt.Errorf("new templates: %w", err)
 	}
 
-	server := pkg.NewServer(log, clientset, tmpl)
+	server := server.New(log, clientset, tmpl)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)

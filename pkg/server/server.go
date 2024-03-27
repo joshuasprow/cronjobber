@@ -1,4 +1,4 @@
-package pkg
+package server
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type Server struct {
 	s *http.Server
 }
 
-func NewServer(
+func New(
 	log *slog.Logger,
 	clientset *kubernetes.Clientset,
 	tmpl *templates.Templates,
