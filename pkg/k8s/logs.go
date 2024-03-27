@@ -1,9 +1,9 @@
 package k8s
 
 import (
-	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/joshuasprow/cronjobber/pkg"
@@ -43,7 +43,7 @@ func StreamLogs(
 ) {
 	defer close(logsCh)
 
-	req := clientset.
+	stream, err := clientset.
 		CoreV1().
 		Pods(container.Namespace).
 		GetLogs(
@@ -53,9 +53,8 @@ func StreamLogs(
 				Follow:    true,
 				TailLines: pkg.Pointer(int64(1)),
 			},
-		)
-
-	stream, err := req.Stream(ctx)
+		).
+		Stream(ctx)
 	if err != nil {
 		logsCh <- pkg.Result[string]{Err: fmt.Errorf("get stream: %w", err)}
 		return
@@ -66,14 +65,26 @@ func StreamLogs(
 		}
 	}()
 
-	scanner := bufio.NewScanner(stream)
+	buf := make([]byte, 1024)
 
-	for scanner.Scan() {
-		if err := scanner.Err(); err != nil {
-			logsCh <- pkg.Result[string]{Err: fmt.Errorf("scan error: %w", err)}
+	for {
+		n, err := stream.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			logsCh <- pkg.Result[string]{Err: fmt.Errorf("read stream: %w", err)}
 			return
 		}
 
-		logsCh <- pkg.Result[string]{V: strings.TrimSpace(scanner.Text())}
+		if n == 0 {
+			break
+		}
+
+		v := strings.TrimSpace(string(buf[:n]))
+
+		fmt.Println(v)
+
+		logsCh <- pkg.Result[string]{V: v}
 	}
 }

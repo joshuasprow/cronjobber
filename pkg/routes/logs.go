@@ -85,7 +85,6 @@ func (l Logs) componentSSR(w http.ResponseWriter, r *http.Request) error {
 	if !ok {
 		return fmt.Errorf("http flusher not supported")
 	}
-	defer flusher.Flush()
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -98,10 +97,6 @@ func (l Logs) componentSSR(w http.ResponseWriter, r *http.Request) error {
 	for {
 		select {
 		case <-ctx.Done():
-			if err := ctx.Err(); err != nil {
-				return fmt.Errorf("context done: %w", err)
-			}
-
 			return nil
 		case log := <-logCh:
 			if log.Err != nil {
