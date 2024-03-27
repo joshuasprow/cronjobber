@@ -1,0 +1,7 @@
+{{ define "components/containerinputs" }}
+  <div id="container-inputs">
+    <input type="hidden" name="namespace" value="{{ .Namespace }}" />
+    <input type="hidden" name="pod" value="{{ .Pod }}" />
+    <input type="hidden" name="name" value="{{ .Name }}" />
+  </div>
+{{ end }}

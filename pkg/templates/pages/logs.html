@@ -9,18 +9,24 @@
       </title>
       {{ block "css" . }}{{ end }}
       {{ block "js" . }}{{ end }}
+      <script src="https://unpkg.com/htmx.org@1.9.11/dist/ext/sse.js"></script>
     </head>
     <body>
       <main>
-        <input type="hidden" name="namespace" value="{{ .Namespace }}" />
-        <input type="hidden" name="pod" value="{{ .Pod }}" />
-        <input type="hidden" name="name" value="{{ .Name }}" />
+        {{ template "components/containerinputs" . }}
         <table>
           <thead>
-            <tr></tr>
+            <tr>
+              <th>message</th>
+            </tr>
           </thead>
 
-          <tbody></tbody>
+          <tbody
+            hx-ext="sse"
+            hx-swap="afterbegin"
+            sse-connect="/logs?namespace={{ .Namespace }}&pod={{ .Pod }}&name={{ .Name }}"
+            sse-swap="message"
+          ></tbody>
         </table>
       </main>
     </body>

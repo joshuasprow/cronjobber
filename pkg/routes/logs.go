@@ -1,9 +1,13 @@
 package routes
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
+	"github.com/joshuasprow/cronjobber/pkg"
+	"github.com/joshuasprow/cronjobber/pkg/k8s"
 	"github.com/joshuasprow/cronjobber/pkg/templates"
 	"github.com/joshuasprow/cronjobber/pkg/templates/pages"
 	"k8s.io/client-go/kubernetes"
@@ -27,6 +31,8 @@ func NewLogs(
 	}
 }
 
+var logCh chan pkg.Result[string]
+
 func (l Logs) GET(w http.ResponseWriter, r *http.Request) {
 	logs, err := pages.ParseLogs(r)
 	if err != nil {
@@ -34,36 +40,52 @@ func (l Logs) GET(w http.ResponseWriter, r *http.Request) {
 		logs.Error = "bad request"
 	}
 
-	name := "pages/logs"
+	if r.Header.Get("Accept") == "text/event-stream" {
+		ctx, cancel := context.WithCancel(r.Context())
+		defer cancel()
 
-	// if r.Header.Get("Hx-Request") == "true" {
-	// 	// prevent browser-level caching of partial page
-	// 	w.Header().Set("Vary", "Hx-Request")
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			l.log.Error("streaming logs", "err", "streaming unsupported")
+			http.Error(w, "streaming unsupported", http.StatusBadRequest)
+			return
+		}
 
-	// 	name = "components/logs"
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
 
-	// 	logs.Loaded = true
+		if logCh == nil {
+			logCh = make(chan pkg.Result[string])
+			go k8s.StreamPodLogs(ctx, l.clientset, logs.Container, logCh)
+		}
 
-	// 	logs.Logs, err = k8s.GetLogs(
-	// 		r.Context(),
-	// 		l.clientset,
-	// 		logs.Namespace,
-	// 		logs.Name,
-	// 	)
-	// 	if err != nil {
-	// 		l.log.Error("get cron jobs", "err", err)
-	// 		logs.Error = "internal server error"
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case log, ok := <-logCh:
+				if log.Err != nil {
+					l.log.Error("streaming logs", "err", log.Err)
+					return
+				}
+				if !ok {
+					return
+				}
 
-	// 		if err := l.tmpl.Render(w, name, logs); err != nil {
-	// 			l.log.Error("execute template", "err", err)
-	// 			return
-	// 		}
+				data := fmt.Sprintf("event: message\ndata: <tr><td><pre>%s</pre></td></tr>\n\n", log.V)
 
-	// 		return
-	// 	}
-	// }
+				if _, err := w.Write([]byte(data)); err != nil {
+					l.log.Error("write log message", "err", err)
+					return
+				}
 
-	if err := l.tmpl.Render(w, name, logs); err != nil {
+				flusher.Flush()
+			}
+		}
+	}
+
+	if err := l.tmpl.Render(w, "pages/logs", logs); err != nil {
 		l.log.Error("execute template", "err", err)
 		return
 	}

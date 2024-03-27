@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/joshuasprow/cronjobber/pkg"
 	"github.com/joshuasprow/cronjobber/pkg/models"
@@ -19,8 +20,6 @@ func StreamPodLogs(
 ) {
 	defer close(logsCh)
 
-	type R = pkg.Result[string]
-
 	req := clientset.
 		CoreV1().
 		Pods(container.Namespace).
@@ -35,12 +34,12 @@ func StreamPodLogs(
 
 	stream, err := req.Stream(ctx)
 	if err != nil {
-		logsCh <- R{Err: fmt.Errorf("get stream: %w", err)}
+		logsCh <- pkg.Result[string]{Err: fmt.Errorf("get stream: %w", err)}
 		return
 	}
 	defer func() {
 		if err := stream.Close(); err != nil {
-			logsCh <- R{Err: fmt.Errorf("close stream: %w", err)}
+			logsCh <- pkg.Result[string]{Err: fmt.Errorf("close stream: %w", err)}
 		}
 	}()
 
@@ -48,10 +47,10 @@ func StreamPodLogs(
 
 	for scanner.Scan() {
 		if err := scanner.Err(); err != nil {
-			logsCh <- R{Err: fmt.Errorf("scan error: %w", err)}
+			logsCh <- pkg.Result[string]{Err: fmt.Errorf("scan error: %w", err)}
 			return
 		}
 
-		logsCh <- R{V: scanner.Text()}
+		logsCh <- pkg.Result[string]{V: strings.TrimSpace(scanner.Text())}
 	}
 }

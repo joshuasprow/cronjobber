@@ -9,6 +9,7 @@ import (
 
 type logMiddlewareWriter struct {
 	http.ResponseWriter
+	http.Flusher
 	bodyBuf    *bytes.Buffer
 	statusCode int
 }
@@ -16,6 +17,7 @@ type logMiddlewareWriter struct {
 func newLogMiddlewareWriter(w http.ResponseWriter) *logMiddlewareWriter {
 	return &logMiddlewareWriter{
 		ResponseWriter: w,
+		Flusher:        w.(http.Flusher),
 		bodyBuf:        &bytes.Buffer{},
 		statusCode:     http.StatusOK,
 	}
