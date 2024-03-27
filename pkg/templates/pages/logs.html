@@ -23,7 +23,7 @@
         hx-target="#logs"
         hx-swap="beforeend"
         sse-connect="/logs?namespace={{ .Namespace }}&pod={{ .Pod }}&name={{ .Name }}"
-        sse-swap="message"
+        sse-swap="log"
       >
         <h1>{{ .Pod }}</h1>
         {{ template "components/containerinputs" . }}

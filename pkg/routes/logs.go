@@ -34,27 +34,24 @@ func NewLogs(
 func (l Logs) GET(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Header.Get("Accept") == "text/event-stream":
-		fmt.Println("GET /logs (stream)")
-		if err := l.handleGetStream(w, r); err != nil {
+		if err := l.componentSSR(w, r); err != nil {
 			l.log.Error("handle get stream", "err", err)
 		}
 	case r.Header.Get("Hx-Request") == "true":
-		fmt.Println("GET /logs (component)")
-		// prevent browser-level caching of partial page
-		// w.Header().Set("Vary", "Hx-Request")
-
-		if err := l.handleGetComponent(w, r); err != nil {
+		if err := l.component(w, r); err != nil {
 			l.log.Error("handle get component", "err", err)
 		}
 	default:
-		fmt.Println("GET /logs (page)")
-		if err := l.handleGetPage(w, r); err != nil {
+		if err := l.page(w, r); err != nil {
 			l.log.Error("handle get page", "err", err)
 		}
 	}
 }
 
-func (l Logs) handleGetComponent(w http.ResponseWriter, r *http.Request) error {
+func (l Logs) component(w http.ResponseWriter, r *http.Request) error {
+	// prevent browser-level caching of partial page
+	w.Header().Set("Vary", "Hx-Request")
+
 	logs, err := pages.ParseLogs(r)
 	if err != nil {
 		return fmt.Errorf("parse logs: %w", err)
@@ -75,20 +72,7 @@ func (l Logs) handleGetComponent(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (l Logs) handleGetPage(w http.ResponseWriter, r *http.Request) error {
-	logs, err := pages.ParseLogs(r)
-	if err != nil {
-		return fmt.Errorf("parse logs: %w", err)
-	}
-
-	if err := l.tmpl.Render(w, "pages/logs", logs); err != nil {
-		return fmt.Errorf("execute template: %w", err)
-	}
-
-	return nil
-}
-
-func (l Logs) handleGetStream(w http.ResponseWriter, r *http.Request) error {
+func (l Logs) componentSSR(w http.ResponseWriter, r *http.Request) error {
 	logs, err := pages.ParseLogs(r)
 	if err != nil {
 		return fmt.Errorf("parse logs: %w", err)
@@ -127,17 +111,24 @@ func (l Logs) handleGetStream(w http.ResponseWriter, r *http.Request) error {
 				break
 			}
 
-			if _, err := w.Write([]byte("event: message\ndata: ")); err != nil {
-				return fmt.Errorf("write event: %w", err)
-			}
-			if err := l.tmpl.Render(w, "components/log", log.V); err != nil {
+			if err := l.tmpl.RenderSSR(w, "log", "components/log", log.V); err != nil {
 				return fmt.Errorf("execute template: %w", err)
-			}
-			if _, err := w.Write([]byte("\n\n")); err != nil {
-				return fmt.Errorf("write newline: %w", err)
 			}
 
 			flusher.Flush()
 		}
 	}
+}
+
+func (l Logs) page(w http.ResponseWriter, r *http.Request) error {
+	logs, err := pages.ParseLogs(r)
+	if err != nil {
+		return fmt.Errorf("parse logs: %w", err)
+	}
+
+	if err := l.tmpl.Render(w, "pages/logs", logs); err != nil {
+		return fmt.Errorf("execute template: %w", err)
+	}
+
+	return nil
 }

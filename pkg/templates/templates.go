@@ -58,3 +58,16 @@ func New() (*Templates, error) {
 func (t *Templates) Render(w io.Writer, name string, data any) error {
 	return t.tmpl.ExecuteTemplate(w, name, data)
 }
+
+func (t *Templates) RenderSSR(w io.Writer, event string, name string, data any) error {
+	if _, err := w.Write([]byte(fmt.Sprintf("event: %s\ndata: ", event))); err != nil {
+		return fmt.Errorf("write event: %w", err)
+	}
+	if err := t.Render(w, name, data); err != nil {
+		return fmt.Errorf("execute template: %w", err)
+	}
+	if _, err := w.Write([]byte("\n\n")); err != nil {
+		return fmt.Errorf("write newline: %w", err)
+	}
+	return nil
+}
