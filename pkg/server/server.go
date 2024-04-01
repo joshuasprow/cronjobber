@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/joshuasprow/cronjobber/pkg/routes"
 	"github.com/joshuasprow/cronjobber/pkg/templates"
 	"k8s.io/client-go/kubernetes"
 )
@@ -22,35 +21,12 @@ func New(
 	clientset *kubernetes.Clientset,
 	tmpl *templates.Templates,
 ) *Server {
-	mux := http.NewServeMux()
-
-	index := routes.NewIndex(log, clientset, tmpl)
-	mux.HandleFunc("GET /", index.GET)
-
-	cronjob := routes.NewCronJob(log, clientset, tmpl)
-	mux.HandleFunc("GET /cronjob", cronjob.GET)
-
-	cronjobdef := routes.NewCronJobDef(log, clientset, tmpl)
-	mux.HandleFunc("GET /cronjobdef", cronjobdef.GET)
-
-	jobs := routes.NewJobs(log, clientset, tmpl)
-	mux.HandleFunc("GET /jobs", jobs.GET)
-
-	job := routes.NewJob(log, clientset, tmpl)
-	mux.HandleFunc("GET /job", job.GET)
-	mux.HandleFunc("POST /job", job.POST)
-	mux.HandleFunc("DELETE /job", job.DELETE)
-
-	jobdef := routes.NewJobDef(log, clientset, tmpl)
-	mux.HandleFunc("GET /jobdef", jobdef.GET)
-
-	logs := routes.NewLogs(log, clientset, tmpl)
-	mux.HandleFunc("GET /logs", logs.GET)
+	handler := logMiddleware(log, newHandler(log, clientset, tmpl))
 
 	return &Server{
 		s: &http.Server{
 			Addr:    ":8080",
-			Handler: logMiddleware(log, mux),
+			Handler: handler,
 		},
 	}
 }
