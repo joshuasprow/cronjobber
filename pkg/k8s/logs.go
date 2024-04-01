@@ -1,90 +1,143 @@
 package k8s
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/joshuasprow/cronjobber/pkg"
 	"github.com/joshuasprow/cronjobber/pkg/models"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
+
+func readLogLine(line string) (models.Log, error) {
+	parts := strings.SplitN(line, " ", 2)
+
+	if len(parts) != 2 {
+		return models.Log{}, fmt.Errorf("invalid format: %q", line)
+	}
+
+	t, err := time.Parse(time.RFC3339Nano, string(parts[0]))
+	if err != nil {
+		return models.Log{}, fmt.Errorf("parse timestamp: %w", err)
+	}
+
+	return models.Log{
+		Timestamp: t,
+		Message:   string(parts[1]),
+	}, nil
+}
+
+func newGetLogsRequest(
+	clientset *kubernetes.Clientset,
+	container models.Container,
+	follow bool,
+) *rest.Request {
+	tailLines := int64(100)
+	if follow {
+		tailLines = 1
+	}
+	return clientset.
+		CoreV1().
+		Pods(container.Namespace).
+		GetLogs(
+			container.Pod,
+			&v1.PodLogOptions{
+				Container:  container.Name,
+				Follow:     follow,
+				TailLines:  &tailLines,
+				Timestamps: true,
+			},
+		)
+}
 
 func GetLogs(
 	ctx context.Context,
 	clientset *kubernetes.Clientset,
 	container models.Container,
 ) (
-	[]string,
+	[]models.Log,
 	error,
 ) {
-	req, err := clientset.
-		CoreV1().
-		Pods(container.Namespace).
-		GetLogs(
-			container.Pod,
-			&v1.PodLogOptions{Container: container.Name},
-		).
-		DoRaw(ctx)
+	body, err := newGetLogsRequest(clientset, container, false).DoRaw(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get logs: %w", err)
 	}
 
-	return strings.Split(strings.TrimSpace(string(req)), "\n"), nil
+	logs := []models.Log{}
+
+	for _, data := range bytes.Split(body, []byte("\n")) {
+		line := strings.TrimSpace(string(data))
+
+		if line == "" {
+			continue
+		}
+
+		log, err := readLogLine(line)
+		if err != nil {
+			return nil, fmt.Errorf("read log line: %w", err)
+		}
+
+		logs = append(logs, log)
+	}
+
+	return logs, nil
 }
+
+type GetLogResult pkg.Result[models.Log]
 
 func StreamLogs(
 	ctx context.Context,
 	clientset *kubernetes.Clientset,
 	container models.Container,
-	logsCh chan<- pkg.Result[string],
+	logsCh chan<- GetLogResult,
 ) {
 	defer close(logsCh)
 
-	stream, err := clientset.
-		CoreV1().
-		Pods(container.Namespace).
-		GetLogs(
-			container.Pod,
-			&v1.PodLogOptions{
-				Container: container.Name,
-				Follow:    true,
-				TailLines: pkg.Pointer(int64(1)),
-			},
-		).
-		Stream(ctx)
-	if err != nil {
-		logsCh <- pkg.Result[string]{Err: fmt.Errorf("get stream: %w", err)}
+	check := func(msg string, err error) bool {
+		if err != nil {
+			logsCh <- GetLogResult{Err: fmt.Errorf("%s: %w", msg, err)}
+			return true
+		}
+		return false
+	}
+
+	stream, err := newGetLogsRequest(clientset, container, true).Stream(ctx)
+	if check("get stream:", err) {
 		return
 	}
-	defer func() {
-		if err := stream.Close(); err != nil {
-			logsCh <- pkg.Result[string]{Err: fmt.Errorf("close stream: %w", err)}
-		}
-	}()
+	defer func() { check("close stream", stream.Close()) }()
 
 	buf := make([]byte, 1024)
 
 	for {
 		n, err := stream.Read(buf)
 		if err == io.EOF {
-			break
+			return
 		}
-		if err != nil {
-			logsCh <- pkg.Result[string]{Err: fmt.Errorf("read stream: %w", err)}
+		if check("read stream:", err) {
+			return
+		}
+		if n == 0 {
 			return
 		}
 
-		if n == 0 {
-			break
+		line := strings.TrimSpace(string(buf[:n]))
+
+		if line == "" {
+			continue
 		}
 
-		v := strings.TrimSpace(string(buf[:n]))
+		log, err := readLogLine(line)
+		if check("read log line:", err) {
+			return
+		}
 
-		fmt.Println(v)
-
-		logsCh <- pkg.Result[string]{V: v}
+		logsCh <- GetLogResult{V: log}
 	}
 }

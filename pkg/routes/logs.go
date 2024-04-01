@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
-	"github.com/joshuasprow/cronjobber/pkg"
 	"github.com/joshuasprow/cronjobber/pkg/k8s"
 	"github.com/joshuasprow/cronjobber/pkg/templates"
 	"github.com/joshuasprow/cronjobber/pkg/templates/pages"
@@ -32,6 +32,9 @@ func NewLogs(
 }
 
 func (l Logs) GET(w http.ResponseWriter, r *http.Request) {
+	// prevent browser-level caching of partial page
+	w.Header().Set("Vary", "Hx-Request")
+
 	switch {
 	case r.Header.Get("Accept") == "text/event-stream":
 		if err := l.componentSSR(w, r); err != nil {
@@ -49,9 +52,6 @@ func (l Logs) GET(w http.ResponseWriter, r *http.Request) {
 }
 
 func (l Logs) component(w http.ResponseWriter, r *http.Request) error {
-	// prevent browser-level caching of partial page
-	w.Header().Set("Vary", "Hx-Request")
-
 	logs, err := pages.ParseLogs(r)
 	if err != nil {
 		return fmt.Errorf("parse logs: %w", err)
@@ -62,7 +62,7 @@ func (l Logs) component(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("get logs: %w", err)
 	}
 
-	logs.Messages = messages
+	logs.Logs = messages
 	logs.Loaded = true
 
 	if err := l.tmpl.Render(w, "components/logs", logs); err != nil {
@@ -90,7 +90,7 @@ func (l Logs) componentSSR(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
-	logCh := make(chan pkg.Result[string])
+	logCh := make(chan k8s.GetLogResult)
 
 	go k8s.StreamLogs(ctx, l.clientset, logs.Container, logCh)
 
@@ -102,7 +102,8 @@ func (l Logs) componentSSR(w http.ResponseWriter, r *http.Request) error {
 			if log.Err != nil {
 				return fmt.Errorf("stream logs: %w", log.Err)
 			}
-			if log.V == "" {
+
+			if log.V.Timestamp == (time.Time{}) {
 				break
 			}
 

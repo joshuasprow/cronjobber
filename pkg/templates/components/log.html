@@ -1,3 +1,5 @@
 {{- define "components/log" -}}
-  <li><pre>{{- . -}}</pre></li>
+  <li id="{{ .Timestamp.UnixNano }}">
+    <pre>{{- .Timestamp.UnixNano }} {{ .Message -}}</pre>
+  </li>
 {{- end -}}

@@ -8,16 +8,23 @@ import (
 	"html/template"
 	"io"
 	"slices"
+
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/html"
 )
 
 //go:embed **.html **/**.html
 var fs embed.FS
 
 type Templates struct {
+	m    *minify.M
 	tmpl *template.Template
 }
 
 func New() (*Templates, error) {
+	m := minify.New()
+	m.Add("text/html", &html.Minifier{})
+
 	tmpl, err := template.
 		New("").
 		Funcs(template.FuncMap{
@@ -52,11 +59,16 @@ func New() (*Templates, error) {
 		return nil, fmt.Errorf("parse templates: %w", err)
 	}
 
-	return &Templates{tmpl: tmpl}, nil
+	return &Templates{
+		m:    m,
+		tmpl: tmpl,
+	}, nil
 }
 
 func (t *Templates) Render(w io.Writer, name string, data any) error {
-	return t.tmpl.ExecuteTemplate(w, name, data)
+	wc := t.m.Writer("text/html", w)
+	defer wc.Close()
+	return t.tmpl.ExecuteTemplate(wc, name, data)
 }
 
 func (t *Templates) RenderSSR(w io.Writer, event string, name string, data any) error {
