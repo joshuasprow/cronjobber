@@ -66,29 +66,18 @@
       <script>
         // @ts-check
         document.addEventListener("DOMContentLoaded", () => {
-          const follow = document.getElementById("follow");
-          const logs = document.getElementById("logs");
+          const els = getElements();
 
-          if (!follow || !(follow instanceof HTMLInputElement)) {
-            console.error("missing or invalid follow checkbox element", follow);
+          if (!els) {
             return;
           }
 
-          if (!logs || !(logs instanceof HTMLElement)) {
-            console.error("missing or invalid logs list element", logs);
-            return;
-          }
+          els.follow.addEventListener("change", onFollowChange);
 
-          if (follow.checked) {
-            logs.addEventListener("htmx:afterSettle", afterLogsListSettle);
-          } else {
-            logs.removeEventListener("htmx:afterSettle", afterLogsListSettle);
-          }
-
-          follow.addEventListener("change", onFollowChange);
+          attachLogsListeners(els);
         });
 
-        /** @param {Event} followChangeEvent */
+        /** @param {Event} [followChangeEvent] */
         function getElements(followChangeEvent) {
           let follow;
 
@@ -117,9 +106,28 @@
          * @param {CustomEvent<{ elt: HTMLElement }>} event
          * [htmx.org](https://htmx.org/events/#details-3)
          */
-        function afterLogsListSettle(event) {
+        function onAfterLogsListSettle(event) {
           const logsList = event.detail.elt;
           logsList.scrollTop = logsList.scrollHeight;
+        }
+
+        /** @param { { logs: HTMLElement; follow: HTMLInputElement } } els */
+        function attachLogsListeners(els) {
+          if (els.follow.checked) {
+            els.logs.addEventListener(
+              "htmx:afterSettle",
+              onAfterLogsListSettle,
+            );
+
+            els.logs.scrollTop = els.logs.scrollHeight;
+
+            return;
+          }
+
+          els.logs.removeEventListener(
+            "htmx:afterSettle",
+            onAfterLogsListSettle,
+          );
         }
 
         /** @param {Event} event */
@@ -130,13 +138,7 @@
             return;
           }
 
-          if (els.follow.checked) {
-            els.logs.addEventListener("htmx:afterSettle", afterLogsListSettle);
-            els.logs.scrollTop = els.logs.scrollHeight;
-            return;
-          }
-
-          els.logs.removeEventListener("htmx:afterSettle", afterLogsListSettle);
+          attachLogsListeners(els);
         }
       </script>
     </body>
