@@ -15,6 +15,20 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+func parseLogLineTimestamp(timestamp string) (time.Time, error) {
+	t, err := time.Parse(time.RFC3339Nano, timestamp)
+	if err == nil {
+		return t, nil
+	}
+
+	t, err = time.Parse(time.RFC3339, timestamp)
+	if err == nil {
+		return t, nil
+	}
+
+	return time.Time{}, err
+}
+
 func readLogLine(line string) (models.Log, error) {
 	parts := strings.SplitN(line, " ", 2)
 
@@ -22,7 +36,7 @@ func readLogLine(line string) (models.Log, error) {
 		return models.Log{}, fmt.Errorf("invalid format: %q", line)
 	}
 
-	t, err := time.Parse(time.RFC3339Nano, string(parts[0]))
+	t, err := parseLogLineTimestamp(string(parts[0]))
 	if err != nil {
 		return models.Log{}, fmt.Errorf("parse timestamp: %w", err)
 	}
