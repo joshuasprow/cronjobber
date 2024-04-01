@@ -52,10 +52,6 @@ func newGetLogsRequest(
 	container models.Container,
 	follow bool,
 ) *rest.Request {
-	tailLines := int64(100)
-	if follow {
-		tailLines = 1
-	}
 	return clientset.
 		CoreV1().
 		Pods(container.Namespace).
@@ -64,7 +60,7 @@ func newGetLogsRequest(
 			&v1.PodLogOptions{
 				Container:  container.Name,
 				Follow:     follow,
-				TailLines:  &tailLines,
+				TailLines:  pkg.Pointer[int64](100),
 				Timestamps: true,
 			},
 		)
