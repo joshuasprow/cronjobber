@@ -9,9 +9,28 @@
       </title>
       {{ block "css" . }}{{ end }}
       <style>
+        h1 {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 0.5rem;
+
+          label {
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            margin-left: auto;
+          }
+        }
+
         ul {
           max-height: 400px;
           overflow: auto;
+          padding: 0 0.5rem 16px /* scrollbar */ 0.5rem;
+        }
+
+        li {
+          list-style: none;
         }
       </style>
       {{ block "js" . }}{{ end }}
@@ -24,13 +43,18 @@
         hx-target="#logs"
         hx-trigger="load"
       >
-        <h1>{{ .Pod }}</h1>
+        <h1>
+          <span>{{ .Pod }}</span>
+          <label>
+            <input id="follow" name="follow" type="checkbox" checked />
+            follow
+          </label>
+        </h1>
         {{ template "components/containerinputs" . }}
         <ul
           id="logs"
           hx-ext="sse"
           hx-swap="beforeend"
-          hx-on::after-settle="this.scrollTo(0, this.scrollHeight);"
           sse-connect="/logs?namespace={{ .Namespace }}&pod={{ .Pod }}&name={{ .Name }}"
           sse-swap="log"
           style="scroll-behavior:smooth;"
@@ -38,6 +62,83 @@
           {{ template "components/logs" . }}
         </ul>
       </main>
+
+      <script>
+        // @ts-check
+        document.addEventListener("DOMContentLoaded", () => {
+          const follow = document.getElementById("follow");
+          const logs = document.getElementById("logs");
+
+          if (!follow || !(follow instanceof HTMLInputElement)) {
+            console.error("missing or invalid follow checkbox element", follow);
+            return;
+          }
+
+          if (!logs || !(logs instanceof HTMLElement)) {
+            console.error("missing or invalid logs list element", logs);
+            return;
+          }
+
+          if (follow.checked) {
+            logs.addEventListener("htmx:afterSettle", afterLogsListSettle);
+          } else {
+            logs.removeEventListener("htmx:afterSettle", afterLogsListSettle);
+          }
+
+          follow.addEventListener("change", onFollowChange);
+        });
+
+        /** @param {Event} followChangeEvent */
+        function getElements(followChangeEvent) {
+          let follow;
+
+          if (followChangeEvent) {
+            follow = followChangeEvent.target;
+          } else {
+            follow = document.getElementById("follow");
+          }
+
+          const logs = document.getElementById("logs");
+
+          if (!follow || !(follow instanceof HTMLInputElement)) {
+            console.error("missing or invalid follow checkbox element", follow);
+            return;
+          }
+
+          if (!logs || !(logs instanceof HTMLElement)) {
+            console.error("missing or invalid logs list element", logs);
+            return;
+          }
+
+          return { follow, logs };
+        }
+
+        /**
+         * @param {CustomEvent<{ elt: HTMLElement }>} event
+         * [htmx.org](https://htmx.org/events/#details-3)
+         */
+        function afterLogsListSettle(event) {
+          const logsList = event.detail.elt;
+          logsList.scrollTop = logsList.scrollHeight;
+        }
+
+        /** @param {Event} event */
+        function onFollowChange(event) {
+          const els = getElements(event);
+
+          if (!els) {
+            return;
+          }
+
+          if (els.follow.checked) {
+            els.logs.addEventListener("htmx:afterSettle", afterLogsListSettle);
+            els.logs.scrollTop = els.logs.scrollHeight;
+            return;
+          }
+
+          els.logs.removeEventListener("htmx:afterSettle", afterLogsListSettle);
+        }
+      </script>
     </body>
   </html>
 {{ end }}
