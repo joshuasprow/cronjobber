@@ -30,53 +30,14 @@
           id="logs"
           hx-ext="sse"
           hx-swap="beforeend"
+          hx-on::after-settle="this.scrollTo(0, this.scrollHeight);"
           sse-connect="/logs?namespace={{ .Namespace }}&pod={{ .Pod }}&name={{ .Name }}"
           sse-swap="log"
+          style="scroll-behavior:smooth;"
         >
           {{ template "components/logs" . }}
         </ul>
       </main>
-
-      <script>
-        // @ts-check
-        document.addEventListener("htmx:load", () => {
-          const logs = document.getElementById("logs");
-
-          if (!logs) {
-            console.error("no logs");
-            return;
-          }
-
-          logs.addEventListener("htmx:beforeSwap", onBeforeLogsSwap);
-        });
-
-        /** @param { Event & { detail?: { elt?: HTMLElement, shouldSwap?: boolean } } } event **/
-        function onBeforeLogsSwap(event) {
-          const id = event.detail?.elt?.id;
-
-          console.log("htmx:beforeSwap", id);
-
-          if (!id) {
-            console.error("no id in event.detail.elt");
-            return;
-          }
-
-          if (!("shouldSwap" in event)) {
-            console.error("no shouldSwap in event");
-            return;
-          }
-
-          if (!!document.getElementById(id)) {
-            console.log("exists");
-
-            event.shouldSwap = false;
-
-            return;
-          }
-
-          console.log("new", event.detail);
-        }
-      </script>
     </body>
   </html>
 {{ end }}
