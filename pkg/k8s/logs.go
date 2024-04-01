@@ -127,7 +127,7 @@ func StreamLogs(
 	}
 	defer func() { check("close stream", stream.Close()) }()
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, 16*1024) // 16KB: the maximum size of a log line in k8s
 
 	for {
 		n, err := stream.Read(buf)
